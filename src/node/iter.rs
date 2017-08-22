@@ -118,52 +118,6 @@ pub struct Iter<N> where N: NodeRef {
     size: usize,
 }
 
-macro_rules! bound {
-    ($iter:expr,
-     $cmp:expr,
-     $bound:expr,
-     $ordering_pre:ident,
-     $ordering_post:ident,
-     $pre:ident,
-     $post:ident,
-     $mut_:ident,
-     $pop:ident,
-     $push:ident
-    ) => {
-        if let Some((key, inc)) = bound_to_opt($bound) {
-            loop {
-                let op = match $iter.nodes.$mut_() {
-                    None => break,
-                    Some(node) => match $cmp.compare(key, node.key()) {
-                        Equal =>
-                            if inc {
-                                if node.$pre().is_some() { $iter.size -= 1; }
-                                break;
-                            } else {
-                                Op::PopPush(node.$post(), true)
-                            },
-                        $ordering_post => Op::PopPush(node.$post(), false),
-                        $ordering_pre => Op::Push(node.$pre()),
-                    },
-                };
-
-                match op {
-                    Op::Push(node_ref) => match node_ref {
-                        None => break,
-                        Some(node) => $iter.nodes.$push(node),
-                    },
-                    Op::PopPush(node_ref, terminate) => {
-                        $iter.nodes.$pop();
-                        $iter.size -= 1;
-                        if let Some(node) = node_ref { $iter.nodes.$push(node); }
-                        if terminate { break; }
-                    }
-                }
-            }
-        }
-    }
-}
-
 impl<N> Iter<N> where N: NodeRef {
     pub fn new(root: Option<N>, size: usize) -> Self {
         Iter { nodes: root.into_iter().collect(), size: size }

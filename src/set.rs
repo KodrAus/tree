@@ -218,21 +218,12 @@ impl<T, C> Set<T, C> where C: Compare<T> {
         self.map.contains_key(item)
     }
 
-    /// Returns a reference to the set's maximum item, or `None` if the set is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let mut set = tree::Set::new();
-    /// assert_eq!(set.max(), None);
-    ///
-    /// set.insert(2);
-    /// set.insert(1);
-    /// set.insert(3);
-    ///
-    /// assert_eq!(set.max(), Some(&3));
-    /// ```
-    pub fn max(&self) -> Option<&T> { self.map.max().map(|e| e.0) }
+    /// Find an entry at a specific position in the set.
+    pub fn find(&self) -> Find<&Self> {
+        Find {
+            inner: self
+        }
+    }
 
     /// Removes and returns the set's maximum item, or `None` if the set is empty.
     ///
@@ -273,22 +264,6 @@ impl<T, C> Set<T, C> where C: Compare<T> {
     pub fn max_entry(&mut self) -> Option<OccupiedEntry<T>> {
         self.map.max_entry().map(OccupiedEntry)
     }
-
-    /// Returns a reference to the set's minimum item, or `None` if the set is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let mut set = tree::Set::new();
-    /// assert_eq!(set.min(), None);
-    ///
-    /// set.insert(2);
-    /// set.insert(1);
-    /// set.insert(3);
-    ///
-    /// assert_eq!(set.min(), Some(&1));
-    /// ```
-    pub fn min(&self) -> Option<&T> { self.map.min().map(|e| e.0) }
 
     /// Removes and returns the set's minimum item, or `None` if the set is empty.
     ///
@@ -695,6 +670,45 @@ impl<T, C> PartialOrd for Set<T, C> where C: Compare<T> {
 
 impl<T, C> Ord for Set<T, C> where C: Compare<T> {
     fn cmp(&self, other: &Self) -> Ordering { Ord::cmp(&self.map, &other.map) }
+}
+
+/// Find an entry at a specific location in the set.
+pub struct Find<T> {
+    inner: T
+}
+
+impl<'a, T, C> Find<&'a Set<T, C>> where C: Compare<T> {
+    /// Returns a reference to the set's maximum item, or `None` if the set is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut set = tree::Set::new();
+    /// assert_eq!(set.find().max(), None);
+    ///
+    /// set.insert(2);
+    /// set.insert(1);
+    /// set.insert(3);
+    ///
+    /// assert_eq!(set.find().max(), Some(&3));
+    /// ```
+    pub fn max(self) -> Option<&'a T> { self.inner.map.find().max().map(|e| e.0) }
+
+    /// Returns a reference to the set's minimum item, or `None` if the set is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut set = tree::Set::new();
+    /// assert_eq!(set.find().min(), None);
+    ///
+    /// set.insert(2);
+    /// set.insert(1);
+    /// set.insert(3);
+    ///
+    /// assert_eq!(set.find().min(), Some(&1));
+    /// ```
+    pub fn min(self) -> Option<&'a T> { self.inner.map.find().min().map(|e| e.0) }
 }
 
 /// An iterator that consumes the set.

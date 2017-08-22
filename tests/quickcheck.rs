@@ -263,7 +263,7 @@ mod max {
     #[test]
     fn agrees_with_iter() {
         fn test(map: Map<u32, u16>) -> bool {
-            map.max() == map.iter().rev().next()
+            map.find().max() == map.iter().rev().next()
         }
 
         quickcheck(test as fn(Map<u32, u16>) -> bool);
@@ -295,7 +295,7 @@ mod min {
     #[test]
     fn agrees_with_iter() {
         fn test(map: Map<u32, u16>) -> bool {
-            map.min() == map.iter().next()
+            map.find().min() == map.iter().next()
         }
 
         quickcheck(test as fn(Map<u32, u16>) -> bool);

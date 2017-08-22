@@ -260,48 +260,18 @@ impl<K, V, C> Map<K, V, C> where C: Compare<K> {
         node::find(&mut self.root, GetMut::default(), &self.cmp, key).map(|e| e.1)
     }
 
-    /// Returns a reference to the map's maximum key and a reference to its associated
-    /// value, or `None` if the map is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let mut map = tree::Map::new();
-    /// assert_eq!(map.max(), None);
-    ///
-    /// map.insert(2, "b");
-    /// map.insert(1, "a");
-    /// map.insert(3, "c");
-    ///
-    /// assert_eq!(map.max(), Some((&3, &"c")));
-    /// ```
-    pub fn max(&self) -> Option<(&K, &V)> {
-        Max::extreme(&self.root, Get::default())
+    /// Find an entry at a specific location in the map.
+    pub fn find(&self) -> Find<&Self> {
+        Find {
+            inner: self
+        }
     }
 
-    /// Returns a reference to the map's maximum key and a mutable reference to its
-    /// associated value, or `None` if the map is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let mut map = tree::Map::new();
-    /// assert_eq!(map.max(), None);
-    ///
-    /// map.insert(2, "b");
-    /// map.insert(1, "a");
-    /// map.insert(3, "c");
-    ///
-    /// {
-    ///     let max = map.max_mut().unwrap();
-    ///     assert_eq!(max, (&3, &mut "c"));
-    ///     *max.1 = "cc";
-    /// }
-    ///
-    /// assert_eq!(map.max(), Some((&3, &"cc")));
-    /// ```
-    pub fn max_mut(&mut self) -> Option<(&K, &mut V)> {
-        Max::extreme(&mut self.root, GetMut::default())
+    /// Find a mutable entry at a specific location in the map.
+    pub fn find_mut(&mut self) -> Find<&mut Self> {
+        Find {
+            inner: self
+        }
     }
 
     /// Removes the map's maximum key and returns it and its associated value, or `None` if the map
@@ -345,50 +315,6 @@ impl<K, V, C> Map<K, V, C> where C: Compare<K> {
     /// ```
     pub fn max_entry(&mut self) -> Option<OccupiedEntry<K, V>> {
         Max::extreme(&mut self.root, PathBuilder::default()).into_occupied_entry(&mut self.len)
-    }
-
-    /// Returns a reference to the map's minimum key and a reference to its associated
-    /// value, or `None` if the map is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let mut map = tree::Map::new();
-    /// assert_eq!(map.min(), None);
-    ///
-    /// map.insert(2, "b");
-    /// map.insert(1, "a");
-    /// map.insert(3, "c");
-    ///
-    /// assert_eq!(map.min(), Some((&1, &"a")));
-    /// ```
-    pub fn min(&self) -> Option<(&K, &V)> {
-        Min::extreme(&self.root, Get::default())
-    }
-
-    /// Returns a reference to the map's minimum key and a mutable reference to its
-    /// associated value, or `None` if the map is empty.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let mut map = tree::Map::new();
-    /// assert_eq!(map.min(), None);
-    ///
-    /// map.insert(2, "b");
-    /// map.insert(1, "a");
-    /// map.insert(3, "c");
-    ///
-    /// {
-    ///     let min = map.min_mut().unwrap();
-    ///     assert_eq!(min, (&1, &mut "a"));
-    ///     *min.1 = "aa";
-    /// }
-    ///
-    /// assert_eq!(map.min(), Some((&1, &"aa")));
-    /// ```
-    pub fn min_mut(&mut self) -> Option<(&K, &mut V)> {
-        Min::extreme(&mut self.root, GetMut::default())
     }
 
     /// Removes the map's minimum key and returns it and its associated value, or `None` if the map
@@ -1039,6 +965,103 @@ impl<K, V, C> Ord for Map<K, V, C> where V: Ord, C: Compare<K> {
                 },
             }
         }
+    }
+}
+
+/// Find an entry at a specific location in the map.
+pub struct Find<T> {
+    inner: T
+}
+
+impl<'a, K, V, C> Find<&'a Map<K, V, C>> where C: Compare<K> {
+    /// Returns a reference to the map's maximum key and a reference to its associated
+    /// value, or `None` if the map is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut map = tree::Map::new();
+    /// assert_eq!(map.find().max(), None);
+    ///
+    /// map.insert(2, "b");
+    /// map.insert(1, "a");
+    /// map.insert(3, "c");
+    ///
+    /// assert_eq!(map.find().max(), Some((&3, &"c")));
+    /// ```
+    pub fn max(self) -> Option<(&'a K, &'a V)> {
+        Max::extreme(&self.inner.root, Get::default())
+    }
+
+    /// Returns a reference to the map's minimum key and a reference to its associated
+    /// value, or `None` if the map is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut map = tree::Map::new();
+    /// assert_eq!(map.find().min(), None);
+    ///
+    /// map.insert(2, "b");
+    /// map.insert(1, "a");
+    /// map.insert(3, "c");
+    ///
+    /// assert_eq!(map.find().min(), Some((&1, &"a")));
+    /// ```
+    pub fn min(self) -> Option<(&'a K, &'a V)> {
+        Min::extreme(&self.inner.root, Get::default())
+    }
+}
+
+impl<'a, K, V, C> Find<&'a mut Map<K, V, C>> where C: Compare<K> {
+    /// Returns a reference to the map's maximum key and a mutable reference to its
+    /// associated value, or `None` if the map is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut map = tree::Map::new();
+    /// assert_eq!(map.find().max(), None);
+    ///
+    /// map.insert(2, "b");
+    /// map.insert(1, "a");
+    /// map.insert(3, "c");
+    ///
+    /// {
+    ///     let max = map.find_mut().max().unwrap();
+    ///     assert_eq!(max, (&3, &mut "c"));
+    ///     *max.1 = "cc";
+    /// }
+    ///
+    /// assert_eq!(map.find().max(), Some((&3, &"cc")));
+    /// ```
+    pub fn max(self) -> Option<(&'a K, &'a mut V)> {
+        Max::extreme(&mut self.inner.root, GetMut::default())
+    }
+
+    /// Returns a reference to the map's minimum key and a mutable reference to its
+    /// associated value, or `None` if the map is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let mut map = tree::Map::new();
+    /// assert_eq!(map.find().min(), None);
+    ///
+    /// map.insert(2, "b");
+    /// map.insert(1, "a");
+    /// map.insert(3, "c");
+    ///
+    /// {
+    ///     let min = map.find_mut().min().unwrap();
+    ///     assert_eq!(min, (&1, &mut "a"));
+    ///     *min.1 = "aa";
+    /// }
+    ///
+    /// assert_eq!(map.find().min(), Some((&1, &"aa")));
+    /// ```
+    pub fn min(self) -> Option<(&'a K, &'a mut V)> {
+        Min::extreme(&mut self.inner.root, GetMut::default())
     }
 }
 
